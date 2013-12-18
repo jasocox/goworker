@@ -22,6 +22,7 @@ func NewWorker(name string, task func()) Worker {
   w := new(worker)
   w.name = name
   w.task = task
+  w.messages = make(chan string)
 
   return w
 }
