@@ -4,7 +4,7 @@ import (
   "fmt"
   "log"
   "sync"
-  "queue"
+  "github.com/jasocox/queue"
 )
 
 type Manager interface {
