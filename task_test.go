@@ -1,6 +1,9 @@
 package goworker
 
-import "testing"
+import (
+  "testing"
+  "errors"
+)
 
 func TestTaskCreation(t *testing.T) {
   NewTask(func() error {return nil})
@@ -40,5 +43,23 @@ func TestMyTask(t *testing.T) {
 
   if !*m.Val {
     t.Error("Did not run the task")
+  }
+}
+
+func TestError(t *testing.T) {
+  task := NewTask(func() error {
+    return errors.New("Nope")
+  })
+
+  err := task.Do()
+
+  if err == nil {
+    t.Error("Did not get an error")
+    return
+  }
+
+  if err.Error() != "Nope" {
+    t.Error("Did not get the correct error")
+    return
   }
 }
