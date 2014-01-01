@@ -1,28 +1,33 @@
 package goworker
 
-import "errors"
+import "log"
 
 type Worker interface {
   Name() string
-  Messages() chan string
-  Running() bool
-
-  MustStart()
-  Start() error
+  Messages() <-chan string
+  Stop()
+  Exec(Task)
+  Error() error
 }
 
 type worker struct {
   name string
   messages chan string
-  running bool
-  task func()
+  commands chan string
+  tasks chan Task
+  err error
 }
 
-func NewWorker(name string, task func()) Worker {
+func NewWorker(name string) Worker {
+  log.Println("Making a new worker: " + name)
+
   w := new(worker)
   w.name = name
-  w.task = task
   w.messages = make(chan string)
+  w.commands = make(chan string)
+  w.tasks = make(chan Task)
+
+  go w.work()
 
   return w
 }
@@ -31,34 +36,51 @@ func (w *worker) Name() string {
   return w.name
 }
 
-func (w *worker) Messages() chan string {
+func (w *worker) Messages() <-chan string {
   return w.messages
 }
 
-func (w *worker) Running() bool {
-  return w.running
-}
+func (w *worker) Stop() {
+  log.Println("Stopping worker: " + w.name)
 
-func (w *worker) MustStart() {
-  err := w.Start()
-  if err != nil {
-    panic(err.Error())
-  }
-}
-
-func (w *worker) Start() (err error) {
-  if w.running {
-    err = errors.New(w.name + " is already running")
-    return
-  }
-
-  w.running = true
-  go func() {
-    w.task()
-
-    w.running = false
-    w.messages <- "Done"
-  }()
+  w.commands <- "Quit"
 
   return
+}
+
+func (w *worker) Exec(t Task) {
+  log.Println("Worker " + w.name + " is execing a task")
+  w.tasks <- t
+}
+
+func (w *worker) Error() (err error) {
+  err, w.err = w.err, nil
+
+  return
+}
+
+func (w *worker) work() {
+  for {
+    select {
+    case task := <-w.tasks:
+      w.exec(task)
+    case command := <-w.commands:
+      if command == "Quit" {
+        break;
+      }
+    }
+  }
+
+  log.Println("Worker " + w.name + " is stopping")
+}
+
+func (w *worker) exec(t Task) {
+  err := t.Do()
+
+  if err != nil {
+    w.err = err
+    w.messages <- "Error"
+  } else {
+    w.messages <- "Done"
+  }
 }
