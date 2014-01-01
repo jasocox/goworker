@@ -22,3 +22,23 @@ func TestTaskRunning(t *testing.T) {
     t.Error("Didn't exec the task")
   }
 }
+
+type MyTask struct {
+  Val *bool
+}
+
+func (m *MyTask) Do() error {
+  *m.Val = true
+
+  return nil
+}
+
+func TestMyTask(t *testing.T) {
+  m := MyTask{new(bool)}
+
+  m.Do()
+
+  if !*m.Val {
+    t.Error("Did not run the task")
+  }
+}
