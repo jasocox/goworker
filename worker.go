@@ -16,11 +16,10 @@ type worker struct {
   commands chan string
   tasks chan Task
   err error
+  debug bool
 }
 
 func NewWorker(name string) Worker {
-  log.Println("Making a new worker: " + name)
-
   w := new(worker)
   w.name = name
   w.messages = make(chan string)
@@ -41,7 +40,9 @@ func (w *worker) Messages() <-chan string {
 }
 
 func (w *worker) Stop() {
-  log.Println("Stopping worker: " + w.name)
+  if w.debug {
+    log.Printf("%s: stopping", w.name)
+  }
 
   w.commands <- "Quit"
 
@@ -49,7 +50,10 @@ func (w *worker) Stop() {
 }
 
 func (w *worker) Exec(t Task) {
-  log.Println("Worker " + w.name + " is execing a task")
+  if w.debug {
+    log.Println("%s: received new task", w.name)
+  }
+
   w.tasks <- t
 }
 
@@ -59,10 +63,17 @@ func (w *worker) Error() (err error) {
   return
 }
 
+func (w *worker) SetDebug(d bool) {
+  w.debug = d
+}
+
 func (w *worker) work() {
   for {
     select {
     case task := <-w.tasks:
+      if w.debug {
+        log.Printf("%s: execing a task", w.name)
+      }
       w.exec(task)
     case command := <-w.commands:
       if command == "Quit" {
@@ -71,16 +82,26 @@ func (w *worker) work() {
     }
   }
 
-  log.Println("Worker " + w.name + " is stopping")
+  if w.debug {
+    log.Printf("%s: is stopping", w.name)
+  }
 }
 
 func (w *worker) exec(t Task) {
   err := t.Do()
 
   if err != nil {
+    if w.debug {
+      log.Printf("%s: error occured when execing task", w.name)
+    }
+
     w.err = err
     w.messages <- "Error"
   } else {
+    if w.debug {
+      log.Printf("%s: done execing task")
+    }
+
     w.messages <- "Done"
   }
 }
