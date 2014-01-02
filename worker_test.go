@@ -33,6 +33,7 @@ func Test_WorkerNotifiesWhenDone(t *testing.T) {
   message := <-w.Messages()
   if message != "Done" {
     t.Error("Did not get notified properly")
+    return
   }
 }
 
@@ -57,19 +58,35 @@ func Test_WorkerDoesMultipleTasks(t *testing.T) {
   })
 
   w.Exec(task1)
-  <-w.Messages()
+  message1 := <-w.Messages()
   w.Exec(task2)
-  <-w.Messages()
+  message2 := <-w.Messages()
   w.Exec(task3)
-  <-w.Messages()
+  message3 := <-w.Messages()
 
   if !*val1 {
     t.Error("Did not exec task 1")
+    return
   }
   if !*val2 {
     t.Error("Did not exec task 2")
+    return
   }
   if !*val3 {
     t.Error("Did not exec task 3")
+    return
+  }
+
+  if message1 != "Done" {
+    t.Error("Did not get notified properly")
+    return
+  }
+  if message2 != "Done" {
+    t.Error("Did not get notified properly")
+    return
+  }
+  if message3 != "Done" {
+    t.Error("Did not get notified properly")
+    return
   }
 }
