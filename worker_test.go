@@ -34,7 +34,7 @@ func Test_WorkerNotifiesWhenDone(t *testing.T) {
   w.Exec(NewTask(func() error {return nil}))
 
   message := <-w.Messages()
-  if message != "Done" {
+  if message != DONE {
     t.Error("Did not get notified properly")
     return
   }
@@ -80,15 +80,15 @@ func Test_WorkerDoesMultipleTasks(t *testing.T) {
     return
   }
 
-  if message1 != "Done" {
+  if message1 != DONE {
     t.Error("Did not get notified properly")
     return
   }
-  if message2 != "Done" {
+  if message2 != DONE {
     t.Error("Did not get notified properly")
     return
   }
-  if message3 != "Done" {
+  if message3 != DONE {
     t.Error("Did not get notified properly")
     return
   }
@@ -101,7 +101,7 @@ func Test_HandlesError(t *testing.T) {
 
   message := <-w.Messages()
 
-  if message != "Error" {
+  if message != ERROR {
     t.Error("Did not respond with the correct status message")
     return
   }

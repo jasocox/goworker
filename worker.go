@@ -12,7 +12,7 @@ type Worker interface {
   Start() error
   Stop() error
 
-  Messages() <-chan string
+  Messages() <-chan int
   Exec(Task) error
   Error() error
 }
@@ -20,8 +20,8 @@ type Worker interface {
 type worker struct {
   name string
 
-  messages chan string
-  commands chan string
+  messages chan int
+  commands chan int
   tasks chan Task
 
   running bool
@@ -29,11 +29,17 @@ type worker struct {
   debug bool
 }
 
+const (
+  DONE = iota
+  QUIT
+  ERROR
+)
+
 func NewWorker(name string) Worker {
   w := new(worker)
   w.name = name
-  w.messages = make(chan string)
-  w.commands = make(chan string)
+  w.messages = make(chan int)
+  w.commands = make(chan int)
   w.tasks = make(chan Task)
 
   w.running = true
@@ -46,7 +52,7 @@ func (w *worker) Name() string {
   return w.name
 }
 
-func (w *worker) Messages() <-chan string {
+func (w *worker) Messages() <-chan int {
   return w.messages
 }
 
@@ -78,7 +84,7 @@ func (w *worker) Stop() error {
   }
 
   w.running = false
-  w.commands <- "Quit"
+  w.commands <- QUIT
 
   return nil
 }
@@ -122,7 +128,7 @@ func (w *worker) work() {
       }
       w.exec(task)
     case command := <-w.commands:
-      if command == "Quit" {
+      if command == QUIT {
         break;
       }
     }
@@ -142,12 +148,12 @@ func (w *worker) exec(t Task) {
     }
 
     w.err = err
-    w.messages <- "Error"
+    w.messages <- ERROR
   } else {
     if w.debug {
       log.Printf("%s: done execing task")
     }
 
-    w.messages <- "Done"
+    w.messages <- DONE
   }
 }
