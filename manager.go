@@ -25,8 +25,8 @@ func NewManager(name string, numWorkers int) Manager {
   m := new(manager)
   m.name = name
 
-  m.available = queue.New()
-  m.tasks = queue.New()
+  m.available = queue.NewAsync()
+  m.tasks = queue.NewAsync()
 
   for i:=0; i<numWorkers; i++ {
     w := NewWorker(fmt.Sprintf("%s %d", name, i))
