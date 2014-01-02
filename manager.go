@@ -8,6 +8,7 @@ import (
 )
 
 type Manager interface {
+  Name() string
   Finish()
   Exec(Task)
 }
