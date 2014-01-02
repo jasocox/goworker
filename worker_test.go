@@ -25,6 +25,17 @@ func Test_WorkerDoesTask(t *testing.T) {
   }
 }
 
+func Test_WorkerNotifiesWhenDone(t *testing.T) {
+  w := NewWorker("Test Worker")
+
+  w.Exec(NewTask(func() error {return nil}))
+
+  message := <-w.Messages()
+  if message != "Done" {
+    t.Error("Did not get notified properly")
+  }
+}
+
 func Test_WorkerDoesMultipleTasks(t *testing.T) {
   w := NewWorker("Test Worker")
 
