@@ -1,6 +1,9 @@
 package goworker
 
-import "testing"
+import (
+  "testing"
+  "errors"
+)
 
 func Test_NewWorker(t *testing.T) {
   w := NewWorker("Test Worker")
@@ -87,6 +90,24 @@ func Test_WorkerDoesMultipleTasks(t *testing.T) {
   }
   if message3 != "Done" {
     t.Error("Did not get notified properly")
+    return
+  }
+}
+
+func Test_HandlesError(t *testing.T) {
+  w := NewWorker("Test Worker")
+
+  w.Exec(NewTask(func() error {return errors.New("Nope")}))
+
+  message := <-w.Messages()
+
+  if message != "Error" {
+    t.Error("Did not respond with the correct status message")
+    return
+  }
+
+  if w.Error().Error() != "Nope" {
+    t.Error("Did not properly save the error")
     return
   }
 }
