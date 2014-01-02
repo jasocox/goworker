@@ -111,3 +111,53 @@ func Test_HandlesError(t *testing.T) {
     return
   }
 }
+
+func Test_StartingAndStopping(t *testing.T) {
+  w := NewWorker("Test Worker")
+
+  task := NewTask(func() error{return nil})
+
+  err := w.Start()
+  if err == nil {
+    t.Error("Should have failed to start a running worker")
+    return
+  }
+
+  err = w.Exec(task)
+  if err != nil {
+    t.Error("Shouldn't have failed to run this task")
+    return
+  }
+  <-w.Messages()
+
+  err = w.Stop()
+  if err != nil {
+    t.Error("Stopping should not have caused an error")
+    return
+  }
+
+  err = w.Exec(task)
+  if err == nil {
+    t.Error("Execing using a stopped worker should have caused an error")
+    return
+  }
+
+  err = w.Start()
+  if err != nil {
+    t.Error("Starting should not have caused an error")
+    return
+  }
+
+  err = w.Exec(task)
+  if err != nil {
+    t.Error("Execing the task should not have caused an error")
+    return
+  }
+  <-w.Messages()
+
+  err = w.Start()
+  if err == nil {
+    t.Error("Starting the worker again should have caused an error")
+    return
+  }
+}

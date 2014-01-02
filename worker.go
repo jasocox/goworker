@@ -1,20 +1,30 @@
 package goworker
 
-import "log"
+import (
+  "log"
+  "errors"
+)
 
 type Worker interface {
   Name() string
+  SetDebug(bool)
+
+  Start() error
+  Stop() error
+
   Messages() <-chan string
-  Stop()
-  Exec(Task)
+  Exec(Task) error
   Error() error
 }
 
 type worker struct {
   name string
+
   messages chan string
   commands chan string
   tasks chan Task
+
+  running bool
   err error
   debug bool
 }
@@ -26,6 +36,7 @@ func NewWorker(name string) Worker {
   w.commands = make(chan string)
   w.tasks = make(chan Task)
 
+  w.running = true
   go w.work()
 
   return w
@@ -39,22 +50,53 @@ func (w *worker) Messages() <-chan string {
   return w.messages
 }
 
-func (w *worker) Stop() {
+func (w *worker) Start() error {
+  if w.running {
+    if w.debug {
+      log.Printf("*s: already running", w.name)
+    }
+
+    return errors.New("Cannot start a running worker")
+  }
+
+  w.running = true
+  go w.work()
+  return nil
+}
+
+func (w *worker) Stop() error {
+  if !w.running {
+    if w.debug {
+      log.Println("%s: is not running")
+    }
+
+    return errors.New("Cannot stop a worker that isn't working")
+  }
+
   if w.debug {
     log.Printf("%s: stopping", w.name)
   }
 
+  w.running = false
   w.commands <- "Quit"
 
-  return
+  return nil
 }
 
-func (w *worker) Exec(t Task) {
+func (w *worker) Exec(t Task) error {
+  if !w.running {
+    if w.debug {
+      log.Println("%s: Cannot exec while not running")
+    }
+    return errors.New("Not running")
+  }
+
   if w.debug {
     log.Println("%s: received new task", w.name)
   }
-
   w.tasks <- t
+
+  return nil
 }
 
 func (w *worker) Error() (err error) {
@@ -68,6 +110,10 @@ func (w *worker) SetDebug(d bool) {
 }
 
 func (w *worker) work() {
+  if w.debug {
+    log.Printf("%s: is starting")
+  }
+
   for {
     select {
     case task := <-w.tasks:
