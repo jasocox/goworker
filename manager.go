@@ -4,7 +4,7 @@ import (
   "fmt"
   "log"
   "sync"
-  "github.com/jasocox/queue"
+  "github.com/jasocox/figo"
 )
 
 type Manager interface {
@@ -17,8 +17,8 @@ type Manager interface {
 type manager struct {
   name string
 
-  available queue.Queue
-  tasks queue.Queue
+  available figo.AsyncQueue
+  tasks figo.AsyncQueue
   wg sync.WaitGroup
 
   debug bool
@@ -28,8 +28,8 @@ func NewManager(name string, numWorkers int) Manager {
   m := new(manager)
   m.name = name
 
-  m.available = queue.NewSync()
-  m.tasks = queue.NewSync()
+  m.available = figo.NewAsync()
+  m.tasks = figo.NewAsync()
 
   for i:=0; i<numWorkers; i++ {
     w := NewWorker(fmt.Sprintf("%s %d", name, i))
