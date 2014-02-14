@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-var TASKS = 1000
+const TASKS = 1000
 
 type Task int
 
