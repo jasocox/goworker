@@ -1,65 +1,65 @@
 package goworker
 
 import (
-  "testing"
-  "errors"
+	"errors"
+	"testing"
 )
 
 func TestTaskCreation(t *testing.T) {
-  NewTask(func() error {return nil})
+	NewTask(func() error { return nil })
 }
 
 func TestTaskRunning(t *testing.T) {
-  var val *bool
+	var val *bool
 
-  val = new(bool)
+	val = new(bool)
 
-  task := NewTask(func() error {
-    *val = true
-    return nil
-  })
+	task := NewTask(func() error {
+		*val = true
+		return nil
+	})
 
-  task.Do()
+	task.Do()
 
-  if !*val {
-    t.Error("Didn't exec the task")
-  }
+	if !*val {
+		t.Error("Didn't exec the task")
+	}
 }
 
 type MyTask struct {
-  Val *bool
+	Val *bool
 }
 
 func (m *MyTask) Do() error {
-  *m.Val = true
+	*m.Val = true
 
-  return nil
+	return nil
 }
 
 func TestMyTask(t *testing.T) {
-  m := MyTask{new(bool)}
+	m := MyTask{new(bool)}
 
-  m.Do()
+	m.Do()
 
-  if !*m.Val {
-    t.Error("Did not run the task")
-  }
+	if !*m.Val {
+		t.Error("Did not run the task")
+	}
 }
 
 func TestError(t *testing.T) {
-  task := NewTask(func() error {
-    return errors.New("Nope")
-  })
+	task := NewTask(func() error {
+		return errors.New("Nope")
+	})
 
-  err := task.Do()
+	err := task.Do()
 
-  if err == nil {
-    t.Error("Did not get an error")
-    return
-  }
+	if err == nil {
+		t.Error("Did not get an error")
+		return
+	}
 
-  if err.Error() != "Nope" {
-    t.Error("Did not get the correct error")
-    return
-  }
+	if err.Error() != "Nope" {
+		t.Error("Did not get the correct error")
+		return
+	}
 }
