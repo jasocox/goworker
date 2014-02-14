@@ -24,6 +24,12 @@ func NewMockTask() (t *mockTask) {
 	return
 }
 
+func NewErrorTask() Task {
+	return NewTask(func() error {
+		return errors.New("Nope")
+	})
+}
+
 func Test_NewWorker(t *testing.T) {
 	w := NewWorker("Test Worker")
 
@@ -100,7 +106,7 @@ func Test_WorkerDoesMultipleTasks(t *testing.T) {
 func Test_HandlesError(t *testing.T) {
 	w := NewWorker("Test Worker")
 
-	w.Exec(NewTask(func() error { return errors.New("Nope") }))
+	w.Exec(NewErrorTask())
 
 	message := <-w.Messages()
 
