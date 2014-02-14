@@ -1,34 +1,6 @@
 package goworker
 
-import (
-	"errors"
-	"testing"
-)
-
-type mockTask struct {
-	ran bool
-}
-
-func (t *mockTask) Do() error {
-	t.ran = true
-	return nil
-}
-
-func (t *mockTask) DidRun() bool {
-	return t.ran
-}
-
-func NewMockTask() (t *mockTask) {
-	t = &mockTask{false}
-
-	return
-}
-
-func NewErrorTask() Task {
-	return NewTask(func() error {
-		return errors.New("Nope")
-	})
-}
+import "testing"
 
 func Test_NewWorker(t *testing.T) {
 	w := NewWorker("Test Worker")

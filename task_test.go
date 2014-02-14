@@ -5,51 +5,51 @@ import (
 	"testing"
 )
 
+type mockTask struct {
+	ran bool
+}
+
+func (t *mockTask) Do() error {
+	t.ran = true
+	return nil
+}
+
+func (t *mockTask) DidRun() bool {
+	return t.ran
+}
+
+func NewMockTask() (t *mockTask) {
+	t = &mockTask{false}
+
+	return
+}
+
+func NewErrorTask() Task {
+	return NewTask(func() error {
+		return errors.New("Nope")
+	})
+}
+
 func TestTaskCreation(t *testing.T) {
 	NewTask(func() error { return nil })
 }
 
 func TestTaskRunning(t *testing.T) {
-	var val *bool
+	task := NewMockTask()
 
-	val = new(bool)
-
-	task := NewTask(func() error {
-		*val = true
-		return nil
-	})
+	if task.DidRun() {
+		t.Error("Excuse me?")
+		return
+	}
 
 	task.Do()
-
-	if !*val {
+	if !task.DidRun() {
 		t.Error("Didn't exec the task")
 	}
 }
 
-type MyTask struct {
-	Val *bool
-}
-
-func (m *MyTask) Do() error {
-	*m.Val = true
-
-	return nil
-}
-
-func TestMyTask(t *testing.T) {
-	m := MyTask{new(bool)}
-
-	m.Do()
-
-	if !*m.Val {
-		t.Error("Did not run the task")
-	}
-}
-
 func TestError(t *testing.T) {
-	task := NewTask(func() error {
-		return errors.New("Nope")
-	})
+	task := NewErrorTask()
 
 	err := task.Do()
 
