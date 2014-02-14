@@ -10,8 +10,9 @@ import (
 type Manager interface {
 	Name() string
 	Finish()
-	Exec(Task)
+	Exec(Task) Manager
 	SetDebug(bool)
+	Then(Task) Manager
 }
 
 type manager struct {
@@ -64,7 +65,7 @@ func (m *manager) Finish() {
 	return
 }
 
-func (m *manager) Exec(t Task) {
+func (m *manager) Exec(t Task) Manager {
 	var w Worker
 
 	if m.debug {
@@ -76,12 +77,17 @@ func (m *manager) Exec(t Task) {
 			log.Println("No workers available, queueing")
 		}
 		m.tasks.Push(t)
-		return
+	} else {
+		w = m.available.Pop().(Worker)
+		m.wg.Add(1)
+		m.exec(w, t)
 	}
 
-	w = m.available.Pop().(Worker)
-	m.wg.Add(1)
-	m.exec(w, t)
+	return m
+}
+
+func (m *manager) Then(t Task) Manager {
+	return m.Exec(t)
 }
 
 func (m *manager) exec(w Worker, t Task) {

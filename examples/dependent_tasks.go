@@ -16,8 +16,6 @@ func (t task_one) Do() error {
 
   log.Printf("First task: %d done.", t)
 
-  worker.Exec(task_two(t))
-
   return nil
 }
 
@@ -42,7 +40,7 @@ func sleep_time() time.Duration {
 
 func main() {
   for i := 0; i < TASKS; i++ {
-    worker.Exec(task_one(i))
+    worker.Exec(task_one(i)).Then(task_two(i))
   }
 
   worker.Finish()

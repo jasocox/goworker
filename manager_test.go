@@ -52,3 +52,22 @@ func Test_ManagerDoesSeveralTasks(t *testing.T) {
 		}
 	}
 }
+
+func Test_DependentTask(t *testing.T) {
+	task1 := NewMockTask()
+	task2 := NewMockTask()
+
+	m := NewManager("Test Manager", 1)
+	m.Exec(task1).Then(task2)
+	m.Finish()
+
+	if !task1.DidRun() {
+		t.Error("Didn't run the first task")
+		return
+	}
+
+	if !task2.DidRun() {
+		t.Error("Didn't run the second task")
+		return
+	}
+}
