@@ -5,6 +5,25 @@ import (
   "errors"
 )
 
+type mockTask struct {
+  ran bool
+}
+
+func (t *mockTask) Do() error {
+  t.ran = true
+  return nil
+}
+
+func (t *mockTask) DidRun() bool {
+  return t.ran
+}
+
+func NewMockTask() (t *mockTask) {
+  t = &mockTask{false}
+
+  return
+}
+
 func Test_NewWorker(t *testing.T) {
   w := NewWorker("Test Worker")
 
@@ -17,13 +36,10 @@ func Test_NewWorker(t *testing.T) {
 func Test_WorkerDoesTask(t *testing.T) {
   w := NewWorker("Test Worker")
 
-  val := new(bool)
-  w.Exec(NewTask(func() error {
-    *val = true
-    return nil
-  }))
+  task := NewMockTask()
+  w.Exec(task)
 
-  if !*val {
+  if !task.DidRun() {
     t.Error("Did not exec the task")
   }
 }
@@ -31,7 +47,7 @@ func Test_WorkerDoesTask(t *testing.T) {
 func Test_WorkerNotifiesWhenDone(t *testing.T) {
   w := NewWorker("Test Worker")
 
-  w.Exec(NewTask(func() error {return nil}))
+  w.Exec(NewMockTask())
 
   message := <-w.Messages()
   if message != DONE {
@@ -43,22 +59,9 @@ func Test_WorkerNotifiesWhenDone(t *testing.T) {
 func Test_WorkerDoesMultipleTasks(t *testing.T) {
   w := NewWorker("Test Worker")
 
-  val1 := new(bool)
-  val2 := new(bool)
-  val3 := new(bool)
-
-  task1 := NewTask(func() error {
-    *val1 = true
-    return nil
-  })
-  task2 := NewTask(func() error {
-    *val2 = true
-    return nil
-  })
-  task3 := NewTask(func() error {
-    *val3 = true
-    return nil
-  })
+  task1 := NewMockTask()
+  task2 := NewMockTask()
+  task3 := NewMockTask()
 
   w.Exec(task1)
   message1 := <-w.Messages()
@@ -67,15 +70,15 @@ func Test_WorkerDoesMultipleTasks(t *testing.T) {
   w.Exec(task3)
   message3 := <-w.Messages()
 
-  if !*val1 {
+  if !task1.DidRun() {
     t.Error("Did not exec task 1")
     return
   }
-  if !*val2 {
+  if !task2.DidRun() {
     t.Error("Did not exec task 2")
     return
   }
-  if !*val3 {
+  if !task3.DidRun() {
     t.Error("Did not exec task 3")
     return
   }
@@ -115,7 +118,7 @@ func Test_HandlesError(t *testing.T) {
 func Test_StartingAndStopping(t *testing.T) {
   w := NewWorker("Test Worker")
 
-  task := NewTask(func() error{return nil})
+  task := NewMockTask()
 
   err := w.Start()
   if err == nil {
