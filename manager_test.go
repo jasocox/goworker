@@ -14,13 +14,10 @@ func Test_New(t *testing.T) {
 func Test_ManagerDoesTask(t *testing.T) {
 	m := NewManager("Test Manager", 1)
 
-	val := new(bool)
-	m.Exec(NewTask(func() error {
-		*val = true
-		return nil
-	}))
+	task := NewMockTask()
+	m.Exec(task)
 
-	if !*val {
+	if !task.DidRun() {
 		t.Error("Did not run the task")
 		return
 	}
@@ -29,24 +26,19 @@ func Test_ManagerDoesTask(t *testing.T) {
 func Test_ManagerDoesSeveralTasks(t *testing.T) {
 	m := NewManager("Test Manaer", 5)
 
-	vals := make([]*bool, 5)
-	for i := range vals {
-		vals[i] = new(bool)
+	tasks := make([]*mockTask, 5)
+	for i := range tasks {
+		tasks[i] = NewMockTask()
 	}
 
-	for i := range vals {
-		// No free i's around here....
-		i := i
-		m.Exec(NewTask(func() error {
-			*vals[i] = true
-			return nil
-		}))
+	for i := range tasks {
+		m.Exec(tasks[i])
 	}
 
 	m.Finish()
 
-	for _, val := range vals {
-		if !*val {
+	for _, task := range tasks {
+		if !task.DidRun() {
 			t.Error("Did not exec task")
 			return
 		}
